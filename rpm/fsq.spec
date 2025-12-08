@@ -62,6 +62,9 @@ rm -rf %{buildroot}
 
 %changelog
 
+* Mon 08 Dec 2025 Samuel Hasert <s.hasert@gsi.de> 0.9.6
+- Path comparison now using strncmp instead of for-loop.
+
 * Tue 21 Oct 2025 Samuel Hasert <s.hasert@gsi.de> 0.9.5
 - Absolute file path resolution to prevent path traversal exploit.
 

@@ -701,25 +701,38 @@ static int write_access(struct fsq_session_t *fsq_session, char *lustre_dpath)
 	}
 
 	/* Resolve path to absolute path */
-	char buf[PATH_MAX];
-	char *output = realpath(fpath, buf);
-	LOG_DEBUG("fpath: '%s', realpath output: '%s', buf: '%s'", fpath, output, buf);
+	char resolved[PATH_MAX];
+	char *output = realpath(fpath, resolved);
+    const size_t L_resolved = strlen(resolved);
+	LOG_DEBUG("fpath: '%s', realpath output: '%s', resolved: '%s'",
+            fpath, output, resolved);
 
 	/* Resolved file path name and Lustre directory name are
        matching up to the end of the Lustre directory name. */
 	LOG_DEBUG("verify lustre_dpath '%s' is a strict prefix of fpath '%s'",
 		  lustre_dpath, fpath);
-	for (size_t l = 0; l < L_lustre_dpath; l++) {
-		if (buf[l] != lustre_dpath[l]) {
-			int rc = -EACCES;
-			FSQ_ERROR(*fsq_session, rc,
-				  "lustre_dpath '%s' is not a strict prefix of fpath '%s'",
-				  lustre_dpath, fpath);
-			return rc;
-		}
-	}
 
-	return 0;
+    /* Make sure lustre_dpath is shorter */
+    if (L_resolved <= L_lustre_dpath) {
+        int rc = -EACCES;
+        FSQ_ERROR(*fsq_session, rc,
+              "lustre_dpath '%s' is not a strict prefix of fpath '%s'",
+              lustre_dpath, fpath);
+        return rc;
+
+    }
+
+    /* Compare paths to make sure resolved path (resolved) includes
+       lustre_dpath. */
+    if (strncmp(resolved, lustre_dpath, L_lustre_dpath) != 0) {
+        int rc = -EACCES;
+        FSQ_ERROR(*fsq_session, rc,
+              "lustre_dpath '%s' is not a strict prefix of fpath '%s'",
+              lustre_dpath, fpath);
+        return rc;
+    }
+
+    return 0;
 }
 
 static int init_fsq_dev_null(char *fpath_local, int *fd_local,

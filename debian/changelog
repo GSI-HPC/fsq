@@ -1,3 +1,9 @@
+fsq (0.9.6) unstable; urgency=low
+
+  * Path comparison now using strncmp instead of for-loop.
+
+ -- Samuel Hasert <s.hasert@gsi.de>  Mon, 08 Dec 2025 13:27:20 +0200
+
 fsq (0.9.5) unstable; urgency=low
 
   * Absolute file path resolution to prevent path traversal exploit.
