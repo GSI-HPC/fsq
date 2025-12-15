@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  clang-tidy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake libtool clang-tidy
+
+      - name: Configure project
+        run: |
+          libtoolize --copy
+          autoreconf --install
+          ./configure
+
+      - name: Run clang-tidy
+        uses: cpp-linter/cpp-linter-action@v2
+        id: linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          style: ''  # disable clang-format
+          tidy-checks: '-*,bugprone-*,clang-analyzer-core.*,clang-analyzer-deadcode.*,clang-analyzer-nullability.*,clang-analyzer-security.FloatLoopCounter,clang-analyzer-unix.*,-clang-analyzer-security.insecureAPI.*'
+          files-changed-only: false
+          database: ''
+          extra-args: '-I. -Isrc/lib -DHAVE_CONFIG_H'
+          files: 'src/fsqc.c,src/lib/fsqapi.c,src/lib/common.c,src/lib/log.c,src/lib/list.c,src/lib/chashtable.c'
+          thread-comments: false
+          step-summary: true
+          file-annotations: true
+
+      - name: Fail if issues found
+        if: steps.linter.outputs.checks-failed > 0
+        run: exit 1
