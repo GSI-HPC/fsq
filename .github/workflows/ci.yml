@@ -12,11 +12,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git describe --tags
 
       - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y autoconf automake libtool clang-tidy
+        run: sudo apt-get install -y autoconf automake libtool
 
       - name: Configure project
         run: |
@@ -35,7 +35,8 @@ jobs:
           files-changed-only: false
           database: ''
           extra-args: '-I. -Isrc/lib -DHAVE_CONFIG_H'
-          files: 'src/fsqc.c,src/lib/fsqapi.c,src/lib/common.c,src/lib/log.c,src/lib/list.c,src/lib/chashtable.c'
+          extensions: 'c'
+          ignore: 'src/fsqd.c|src/test|src/benchmark'
           thread-comments: false
           step-summary: true
           file-annotations: true
