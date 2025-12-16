@@ -20,8 +20,7 @@ jobs:
 
       - name: Configure project
         run: |
-          libtoolize --copy
-          autoreconf --install
+          ./autogen.sh
           ./configure --enable-stubs
 
       - name: Generate compilation database
