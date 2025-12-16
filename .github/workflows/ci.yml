@@ -32,12 +32,12 @@ jobs:
         with:
           style: ''  # disable clang-format
           tidy-checks: '-*,bugprone-*,clang-analyzer-core.*,clang-analyzer-deadcode.*,clang-analyzer-nullability.*,clang-analyzer-security.FloatLoopCounter,clang-analyzer-unix.*,-clang-analyzer-security.insecureAPI.*'
-          files-changed-only: false
+          files-changed-only: ${{ github.event_name == 'pull_request' }}
           database: ''
           extra-args: '-I. -Isrc/lib -DHAVE_CONFIG_H'
           extensions: 'c'
           ignore: 'src/fsqd.c|src/test|src/benchmark'
-          thread-comments: false
+          thread-comments: ${{ github.event_name == 'pull_request' }}
           step-summary: true
           file-annotations: true
 
