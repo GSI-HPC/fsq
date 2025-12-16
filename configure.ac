@@ -33,11 +33,34 @@ AC_CONFIG_MACRO_DIR([m4])
 #  Default-disabled fsqd.
 AC_ARG_ENABLE([fsqd],
               AS_HELP_STRING([--enable-fsqd], [enable and build fsqd]))
-AM_CONDITIONAL([BUILD_FSQD], [test "x$enable_fsqd" = "xyes"])
+
+# Enable stub headers for static analysis (clang-tidy) without real libraries.
+AC_ARG_ENABLE([stubs],
+              AS_HELP_STRING([--enable-stubs], [use stub headers for static analysis (implies --enable-fsqd)]))
 
 build_fsqd="no"
+use_stubs="no"
+
+# Stubs mode: use stub headers, skip library checks, enable all builds.
+if test "x$enable_stubs" = "xyes"; then
+  use_stubs="yes"
+  enable_fsqd="yes"
+  enable_tests="yes"
+  enable_benchmark="yes"
+  # Makefile.am appends to these paths:
+  #   LUSTRE_SRC_DIR -> /lustre/include and /lustre/include/uapi
+  #   TSM_SRC_DIR    -> /
+  #   LTSM_SRC_DIR   -> /
+  LUSTRE_SRC_DIR='$(top_srcdir)/src/stubs'
+  TSM_SRC_DIR='$(top_srcdir)/src/stubs/tsm/include'
+  LTSM_SRC_DIR='$(top_srcdir)/src/stubs/ltsm/include'
+  build_fsqd="yes"
+  AC_DEFINE([BUILD_FSQD], [1], [define if enabling fsqd build])
+fi
+AM_CONDITIONAL([USE_STUBS], [test "x$use_stubs" = "xyes"])
+
 # Fsqd build is enabled, make sure all requred header files and libraries are provided.
-if test "x$enable_fsqd" = "xyes"; then
+if test "x$enable_fsqd" = "xyes" && test "x$use_stubs" = "xno"; then
   # Path to Lustre header files directory, needed to compile fsqd.
   AC_ARG_WITH([lustre-headers],
               AS_HELP_STRING([--with-lustre-headers[=PATH]],[path to location of Lustre header files [default=/usr/include/lustre]]),
@@ -106,8 +129,10 @@ if test "x$enable_fsqd" = "xyes"; then
 
   build_fsqd="yes"
   AC_DEFINE([BUILD_FSQD], [1], [define if enabling fsqd build])
-  AM_CONDITIONAL([BUILD_FSQD], [true])
 fi
+
+# Set BUILD_FSQD conditional once (--enable-stubs or --enable-fsqd may enable it).
+AM_CONDITIONAL([BUILD_FSQD], [test "x$build_fsqd" = "xyes"])
 
 # Checks for other libraries.
 AC_CHECK_LIB([m],[ceil])
@@ -178,6 +203,7 @@ AC_CHECK_FUNCS([malloc realloc atexit bzero clock_gettime gettimeofday memmove m
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/lib/Makefile
+		 src/stubs/Makefile
 		 src/test/Makefile
 		 src/benchmark/Makefile
 		 man/Makefile])
@@ -206,4 +232,5 @@ echo "build fsqc and fsqapi library : yes"
 echo "build fsqd                    : ${build_fsqd}"
 echo "build test suite              : ${enable_tests}"
 echo "build benchmark               : ${enable_benchmark}"
+echo "use stub headers              : ${use_stubs}"
 echo

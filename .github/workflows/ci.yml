@@ -16,13 +16,16 @@ jobs:
           fetch-depth: 0  # Full history for git describe --tags
 
       - name: Install dependencies
-        run: sudo apt-get install -y autoconf automake libtool
+        run: sudo apt-get install -y autoconf automake libtool bear
 
       - name: Configure project
         run: |
           libtoolize --copy
           autoreconf --install
-          ./configure
+          ./configure --enable-stubs
+
+      - name: Generate compilation database
+        run: bear -- make -j$(nproc)
 
       - name: Run clang-tidy
         uses: cpp-linter/cpp-linter-action@v2
@@ -33,10 +36,8 @@ jobs:
           style: ''  # disable clang-format
           tidy-checks: '-*,bugprone-*,clang-analyzer-core.*,clang-analyzer-deadcode.*,clang-analyzer-nullability.*,clang-analyzer-security.FloatLoopCounter,clang-analyzer-unix.*,-clang-analyzer-security.insecureAPI.*'
           files-changed-only: ${{ github.event_name == 'pull_request' }}
-          database: ''
-          extra-args: '-I. -Isrc/lib -DHAVE_CONFIG_H'
+          database: '.'
           extensions: 'c'
-          ignore: 'src/fsqd.c|src/test|src/benchmark'
           thread-comments: ${{ github.event_name == 'pull_request' }}
           step-summary: true
           file-annotations: true

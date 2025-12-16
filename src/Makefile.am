@@ -1,5 +1,9 @@
 SUBDIRS = lib
 
+if USE_STUBS
+    SUBDIRS += stubs
+endif
+
 if BUILD_TESTS
     SUBDIRS += test
 endif
@@ -14,7 +18,11 @@ if BUILD_FSQD
     fsqd_CFLAGS = -I@LUSTRE_SRC_DIR@/lustre/include -I@LUSTRE_SRC_DIR@/lustre/include/uapi -I@TSM_SRC_DIR@/ -I@LTSM_SRC_DIR@/ -Ilib
     sbin_PROGRAMS = fsqd
     fsqd_SOURCES = fsqd.c
+if USE_STUBS
+    fsqd_LDADD = lib/libfsqapi.la stubs/libstubs.la
+else
     fsqd_LDADD = lib/libfsqapi.la
+endif
 endif
 
 fsqc_CFLAGS = -Ilib
