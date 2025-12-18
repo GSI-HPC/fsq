@@ -1,0 +1,30 @@
+# clang-tidy configuration for fsq project
+#
+# This configuration is used by the CI workflow for static analysis.
+
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-core.*,
+  clang-analyzer-deadcode.*,
+  clang-analyzer-nullability.*,
+  clang-analyzer-security.FloatLoopCounter,
+  clang-analyzer-unix.*,
+  -clang-analyzer-security.insecureAPI.*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-suspicious-include
+
+CheckOptions:
+  # Allow feature test macros used in this project
+  - key: bugprone-reserved-identifier.AllowedIdentifiers
+    value: '_GNU_SOURCE'
+
+# Notes on disabled checks:
+#
+# bugprone-easily-swappable-parameters:
+#   Disabled because qsort comparison functions require (const void *, const void *)
+#   signature per the C standard. These parameters are intentionally of the same type.
+#
+# bugprone-suspicious-include:
+#   Disabled because some test files intentionally include .c files to test
+#   static functions directly. This is a common unit testing pattern.

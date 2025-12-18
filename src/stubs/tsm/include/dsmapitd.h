@@ -70,24 +70,41 @@ typedef struct {
     dsChar_t    mcName[DSM_MAX_MC_NAME_LENGTH + 1];
 } ObjAttr;
 
+/* Object ID structure */
+typedef struct {
+    dsUint32_t hi;
+    dsUint32_t lo;
+} ObjID;
+
+/* Restore order extended structure */
+typedef struct {
+    dsUint32_t top;
+    dsUint32_t hi_hi;
+    dsUint32_t hi_lo;
+    dsUint32_t lo_hi;
+    dsUint32_t lo_lo;
+} RestoreOrderExt;
+
 /* Query response for archive data */
 typedef struct {
-    dsUint8_t    stVersion;
-    dsmObjName   objName;
-    dsUint32_t   copyGroup;
-    dsChar_t     mcName[DSM_MAX_MC_NAME_LENGTH + 1];
-    dsChar_t     owner[DSM_MAX_OWNER_LENGTH + 1];
-    dsmDate      insDate;
-    dsmDate      expDate;
-    dsChar_t     descr[DSM_MAX_DESCR_LENGTH + 1];
-    dsUint16_t   objInfoLength;
-    dsStruct64_t sizeEstimate;
-    dsUint8_t    compressType;
-    dsUint8_t    retentionInitiated;
-    dsUint8_t    objHeld;
-    dsUint8_t    encryptionType;
-    dsmBool_t    clientDeduplicated;
-    char         objInfo[DSM_MAX_OBJINFO_LENGTH];
+    dsUint8_t       stVersion;
+    dsmObjName      objName;
+    dsUint32_t      copyGroup;
+    dsChar_t        mcName[DSM_MAX_MC_NAME_LENGTH + 1];
+    dsChar_t        owner[DSM_MAX_OWNER_LENGTH + 1];
+    dsmDate         insDate;
+    dsmDate         expDate;
+    dsChar_t        descr[DSM_MAX_DESCR_LENGTH + 1];
+    dsUint16_t      objInfoLength;
+    dsStruct64_t    sizeEstimate;
+    dsUint8_t       compressType;
+    dsUint8_t       retentionInitiated;
+    dsUint8_t       objHeld;
+    dsUint8_t       encryptionType;
+    dsmBool_t       clientDeduplicated;
+    char            objInfo[DSM_MAX_OBJINFO_LENGTH];
+    ObjID           objId;
+    RestoreOrderExt restoreOrderExt;
 } qryRespArchiveData;
 
 /* Version structures */
