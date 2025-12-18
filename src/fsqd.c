@@ -700,21 +700,39 @@ static int write_access(struct fsq_session_t *fsq_session, char *lustre_dpath)
 		return rc;
 	}
 
-	/* File path name and Lustre directory name are matching
-	   up to the end of the Lustre directory name. */
+	/* Resolve path to absolute path */
+	char resolved[PATH_MAX];
+	char *output = realpath(fpath, resolved);
+    const size_t L_resolved = strlen(resolved);
+	LOG_DEBUG("fpath: '%s', realpath output: '%s', resolved: '%s'",
+            fpath, output, resolved);
+
+	/* Resolved file path name and Lustre directory name are
+       matching up to the end of the Lustre directory name. */
 	LOG_DEBUG("verify lustre_dpath '%s' is a strict prefix of fpath '%s'",
 		  lustre_dpath, fpath);
-	for (size_t l = 0; l < L_lustre_dpath; l++) {
-		if (fpath[l] != lustre_dpath[l]) {
-			int rc = -EACCES;
-			FSQ_ERROR(*fsq_session, rc,
-				  "lustre_dpath '%s' is not a strict prefix of fpath '%s'",
-				  lustre_dpath, fpath);
-			return rc;
-		}
-	}
 
-	return 0;
+    /* Make sure lustre_dpath is shorter */
+    if (L_resolved <= L_lustre_dpath) {
+        int rc = -EACCES;
+        FSQ_ERROR(*fsq_session, rc,
+              "lustre_dpath '%s' is not a strict prefix of fpath '%s'",
+              lustre_dpath, fpath);
+        return rc;
+
+    }
+
+    /* Compare paths to make sure resolved path (resolved) includes
+       lustre_dpath. */
+    if (strncmp(resolved, lustre_dpath, L_lustre_dpath) != 0) {
+        int rc = -EACCES;
+        FSQ_ERROR(*fsq_session, rc,
+              "lustre_dpath '%s' is not a strict prefix of fpath '%s'",
+              lustre_dpath, fpath);
+        return rc;
+    }
+
+    return 0;
 }
 
 static int init_fsq_dev_null(char *fpath_local, int *fd_local,
@@ -1008,19 +1026,19 @@ static void *thread_sock_client(void *arg)
 		if (fsq_session.fsq_packet.state & FSQ_DISCONNECT)
 			goto out;
 
+		rc = write_access(&fsq_session, lustre_dpath);
+		if (rc) {
+			/* FSQ error field is filled inside write_access function. */
+			rc = fsq_send(&fsq_session, FSQ_ERROR | FSQ_REPLY);
+			goto out;
+		}
+
 		rc = init_fsq_storage(fpath_local, &fd_local, &fsq_session);
 		if (rc) {
 			FSQ_ERROR(fsq_session, rc,
 				  "init_fsq_storage failed '%s'",
 				  FSQ_STORAGE_DEST_STR(
 					  fsq_session.fsq_packet.fsq_info.fsq_storage_dest));
-			rc = fsq_send(&fsq_session, FSQ_ERROR | FSQ_REPLY);
-			goto out;
-		}
-
-		rc = write_access(&fsq_session, lustre_dpath);
-		if (rc) {
-			/* FSQ error field is filled inside write_access function. */
 			rc = fsq_send(&fsq_session, FSQ_ERROR | FSQ_REPLY);
 			goto out;
 		}
